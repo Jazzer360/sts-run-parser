@@ -4,6 +4,7 @@ import statistics
 from datetime import datetime
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 runs_path = "C:/Program Files (x86)/Steam/steamapps/common/SlayTheSpire/runs"
 
@@ -49,27 +50,70 @@ def duration_format(seconds):
     return f'{hrs:02}:{mins:02}:{secs:02}'
 
 
-def average_floor_data(runs, run_qty):
-    x_vals = []
-    y_vals = []
+def average_floor_data(runs, run_qty, char='ALL'):
+    def char_filter(run):
+        if char == 'ALL' or run.get('character_chosen') == char:
+            return True
+        else:
+            return False
+    runs = list(filter(char_filter, runs))
+    x_vals, winrate, avg_floor = [], [], []
     for n in range(run_qty-1, len(runs)):
-        floors = [1 if r['victory'] else 0 for r in runs[n-run_qty+1:n+1]]
+        last_qty = runs[n-run_qty+1:n+1]
         x_vals.append(n)  # runs[n]['local_time'])
-        y_vals.append(statistics.mean(floors))
-    return x_vals, y_vals
+        floors = [1 if r['victory'] else 0 for r in last_qty]
+        winrate.append(statistics.mean(floors))
+        floors = [r['floor_reached'] / 57 for r in last_qty]
+        avg_floor.append(statistics.mean(floors))
+    return x_vals, winrate, avg_floor
 
 
 if __name__ == '__main__':
     def sort_key(run):
         return run['local_time']
     data = sorted(list(filter(run_filter, runs())), key=sort_key)
-    wins = 0
-    for run in data:
-        print(f"{run['local_time']}, {run['playtime']}, {run['max_hp']}, "
-              f"{run['deck_size']}, {run['floor_reached']}, {run['victory']}, "
-              f"{run['character_chosen']}")
-        if run['victory']:
-            wins += 1
-    print(wins / len(data))
-    plt.plot(*average_floor_data(data, 50))
+    lookback_period = 50
+
+    fig = plt.figure(
+        label=f"Run data moving average (last {lookback_period} runs)")
+    gs_main = gridspec.GridSpec(1, 2, width_ratios=[2, 1.5], figure=fig)
+
+    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period)
+    ax_main = fig.add_subplot(gs_main[0, 0])
+    ax_main.plot(x_vals, winrate, label='Winrate')
+    ax_main.plot(x_vals, avg_floor, label='Height reached')
+    ax_main.set_title("Overall data")
+    ax_main.legend()
+
+    gs_right = gridspec.GridSpecFromSubplotSpec(
+        2, 2, subplot_spec=gs_main[0, 1], hspace=0.4, wspace=0.3)
+
+    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
+                                                    char='IRONCLAD')
+    ax_ic = fig.add_subplot(gs_right[0, 0])
+    ax_ic.plot(x_vals, winrate, label='Winrate')
+    ax_ic.plot(x_vals, avg_floor, label='Height reached')
+    ax_ic.set_title('Ironclad')
+
+    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
+                                                    char='THE_SILENT')
+    ax_ic = fig.add_subplot(gs_right[0, 1])
+    ax_ic.plot(x_vals, winrate, label='Winrate')
+    ax_ic.plot(x_vals, avg_floor, label='Height reached')
+    ax_ic.set_title('Silent')
+
+    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
+                                                    char='DEFECT')
+    ax_ic = fig.add_subplot(gs_right[1, 0])
+    ax_ic.plot(x_vals, winrate, label='Winrate')
+    ax_ic.plot(x_vals, avg_floor, label='Height reached')
+    ax_ic.set_title('Defect')
+
+    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
+                                                    char='WATCHER')
+    ax_ic = fig.add_subplot(gs_right[1, 1])
+    ax_ic.plot(x_vals, winrate, label='Winrate')
+    ax_ic.plot(x_vals, avg_floor, label='Height reached')
+    ax_ic.set_title('Watcher')
+
     plt.show()
