@@ -60,6 +60,7 @@ def average_floor_data(runs, run_qty, char='ALL'):
         else:
             return False
     runs = list(filter(char_filter, runs))
+    print(f"{char}: {len(runs)}")
     x_vals, winrate, avg_floor = [], [], []
     for n in range(run_qty-1, len(runs)):
         last_qty = runs[n-run_qty+1:n+1]
@@ -71,11 +72,26 @@ def average_floor_data(runs, run_qty, char='ALL'):
     return x_vals, winrate, avg_floor
 
 
+def best_streak(runs):
+    streak = 0
+    best_streak = 0
+    for run in runs:
+        if run['victory']:
+            streak += 1
+            if streak > best_streak:
+                best_streak = streak
+        else:
+            streak = 0
+    return best_streak
+
+
 if __name__ == '__main__':
     def sort_key(run):
         return run['local_time']
     data = sorted(list(filter(run_filter, runs())), key=sort_key)
     lookback_period = 50
+
+    print(f"Best Streak: {best_streak(data)}")
 
     fig = plt.figure(
         label=f"Run data moving average (last {lookback_period} runs)")
