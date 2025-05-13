@@ -23,6 +23,7 @@ def runs():
                         data['playtime'] = duration_format(data['playtime'])
                         data['deck_size'] = len(data['master_deck'])
                         data['max_hp'] = data['max_hp_per_floor'][-1]
+                        data['victory'] = data['floor_reached'] == 57
                         yield data
                 except FileNotFoundError:
                     print(f'Error: File not found at {file_path}')
@@ -39,6 +40,8 @@ def run_filter(run):
     if char not in ['IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER']:
         return False
     if run.get('floor_reached') < 2:
+        return False
+    if run.get('is_daily'):
         return False
     return True
 
@@ -60,7 +63,7 @@ def average_floor_data(runs, run_qty, char='ALL'):
     x_vals, winrate, avg_floor = [], [], []
     for n in range(run_qty-1, len(runs)):
         last_qty = runs[n-run_qty+1:n+1]
-        x_vals.append(n)  # runs[n]['local_time'])
+        x_vals.append(n)
         floors = [1 if r['victory'] else 0 for r in last_qty]
         winrate.append(statistics.mean(floors))
         floors = [r['floor_reached'] / 57 for r in last_qty]
