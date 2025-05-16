@@ -69,7 +69,7 @@ def average_floor_data(runs, run_qty, char='ALL'):
         winrate.append(statistics.mean(floors))
         floors = [r['floor_reached'] / 57 for r in last_qty]
         avg_floor.append(statistics.mean(floors))
-    return x_vals, winrate, avg_floor
+    return x_vals, winrate, avg_floor, len(runs)
 
 
 def best_streak(runs):
@@ -97,42 +97,42 @@ if __name__ == '__main__':
         label=f"Run data moving average (last {lookback_period} runs)")
     gs_main = gridspec.GridSpec(1, 2, width_ratios=[2, 1.5], figure=fig)
 
-    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period)
+    vals, winrate, height, runs = average_floor_data(data, lookback_period)
     ax_main = fig.add_subplot(gs_main[0, 0])
-    ax_main.plot(x_vals, winrate, label='Winrate')
-    ax_main.plot(x_vals, avg_floor, label='Height reached')
-    ax_main.set_title("Overall data")
+    ax_main.plot(vals, winrate, label='Winrate')
+    ax_main.plot(vals, height, label='Height reached')
+    ax_main.set_title(f"Overall data ({runs})")
     ax_main.legend()
 
     gs_right = gridspec.GridSpecFromSubplotSpec(
         2, 2, subplot_spec=gs_main[0, 1], hspace=0.4, wspace=0.3)
 
-    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
-                                                    char='IRONCLAD')
+    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+                                                     char='IRONCLAD')
     ax_ic = fig.add_subplot(gs_right[0, 0])
-    ax_ic.plot(x_vals, winrate, label='Winrate')
-    ax_ic.plot(x_vals, avg_floor, label='Height reached')
-    ax_ic.set_title('Ironclad')
+    ax_ic.plot(vals, winrate, label='Winrate')
+    ax_ic.plot(vals, height, label='Height reached')
+    ax_ic.set_title(f'Ironclad ({runs})')
 
-    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
-                                                    char='THE_SILENT')
+    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+                                                     char='THE_SILENT')
     ax_ic = fig.add_subplot(gs_right[0, 1])
-    ax_ic.plot(x_vals, winrate, label='Winrate')
-    ax_ic.plot(x_vals, avg_floor, label='Height reached')
-    ax_ic.set_title('Silent')
+    ax_ic.plot(vals, winrate, label='Winrate')
+    ax_ic.plot(vals, height, label='Height reached')
+    ax_ic.set_title(f'Silent ({runs})')
 
-    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
-                                                    char='DEFECT')
+    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+                                                     char='DEFECT')
     ax_ic = fig.add_subplot(gs_right[1, 0])
-    ax_ic.plot(x_vals, winrate, label='Winrate')
-    ax_ic.plot(x_vals, avg_floor, label='Height reached')
-    ax_ic.set_title('Defect')
+    ax_ic.plot(vals, winrate, label='Winrate')
+    ax_ic.plot(vals, height, label='Height reached')
+    ax_ic.set_title(f'Defect ({runs})')
 
-    x_vals, winrate, avg_floor = average_floor_data(data, lookback_period,
-                                                    char='WATCHER')
+    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+                                                     char='WATCHER')
     ax_ic = fig.add_subplot(gs_right[1, 1])
-    ax_ic.plot(x_vals, winrate, label='Winrate')
-    ax_ic.plot(x_vals, avg_floor, label='Height reached')
-    ax_ic.set_title('Watcher')
+    ax_ic.plot(vals, winrate, label='Winrate')
+    ax_ic.plot(vals, height, label='Height reached')
+    ax_ic.set_title(f'Watcher ({runs})')
 
     plt.show()
