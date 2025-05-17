@@ -60,7 +60,6 @@ def average_floor_data(runs, run_qty, char='ALL'):
         else:
             return False
     runs = list(filter(char_filter, runs))
-    print(f"{char}: {len(runs)}")
     x_vals, winrate, avg_floor = [], [], []
     for n in range(run_qty-1, len(runs)):
         last_qty = runs[n-run_qty+1:n+1]
@@ -85,19 +84,12 @@ def best_streak(runs):
     return best_streak
 
 
-if __name__ == '__main__':
-    def sort_key(run):
-        return run['local_time']
-    data = sorted(list(filter(run_filter, runs())), key=sort_key)
-    lookback_period = 50
-
-    print(f"Best Streak: {best_streak(data)}")
-
+def plot_by_lookback(period):
     fig = plt.figure(
-        label=f"Run data moving average (last {lookback_period} runs)")
+        label=f"Run data moving average (last {period} runs)")
     gs_main = gridspec.GridSpec(1, 2, width_ratios=[2, 1.5], figure=fig)
 
-    vals, winrate, height, runs = average_floor_data(data, lookback_period)
+    vals, winrate, height, runs = average_floor_data(data, period)
     ax_main = fig.add_subplot(gs_main[0, 0])
     ax_main.plot(vals, winrate, label='Winrate')
     ax_main.plot(vals, height, label='Height reached')
@@ -107,32 +99,44 @@ if __name__ == '__main__':
     gs_right = gridspec.GridSpecFromSubplotSpec(
         2, 2, subplot_spec=gs_main[0, 1], hspace=0.4, wspace=0.3)
 
-    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+    vals, winrate, height, runs = average_floor_data(data, period,
                                                      char='IRONCLAD')
     ax_ic = fig.add_subplot(gs_right[0, 0])
     ax_ic.plot(vals, winrate, label='Winrate')
     ax_ic.plot(vals, height, label='Height reached')
     ax_ic.set_title(f'Ironclad ({runs})')
 
-    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+    vals, winrate, height, runs = average_floor_data(data, period,
                                                      char='THE_SILENT')
     ax_ic = fig.add_subplot(gs_right[0, 1])
     ax_ic.plot(vals, winrate, label='Winrate')
     ax_ic.plot(vals, height, label='Height reached')
     ax_ic.set_title(f'Silent ({runs})')
 
-    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+    vals, winrate, height, runs = average_floor_data(data, period,
                                                      char='DEFECT')
     ax_ic = fig.add_subplot(gs_right[1, 0])
     ax_ic.plot(vals, winrate, label='Winrate')
     ax_ic.plot(vals, height, label='Height reached')
     ax_ic.set_title(f'Defect ({runs})')
 
-    vals, winrate, height, runs = average_floor_data(data, lookback_period,
+    vals, winrate, height, runs = average_floor_data(data, period,
                                                      char='WATCHER')
     ax_ic = fig.add_subplot(gs_right[1, 1])
     ax_ic.plot(vals, winrate, label='Winrate')
     ax_ic.plot(vals, height, label='Height reached')
     ax_ic.set_title(f'Watcher ({runs})')
 
+
+if __name__ == '__main__':
+    def sort_key(run):
+        return run['local_time']
+    data = sorted(list(filter(run_filter, runs())), key=sort_key)
+    lookback_period = 100
+
+    print(f"Best Streak: {best_streak(data)}")
+
+    plot_by_lookback(50)
+    plot_by_lookback(100)
+    plot_by_lookback(200)
     plt.show()
