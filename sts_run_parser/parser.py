@@ -60,10 +60,10 @@ def average_floor_data(runs, run_qty, char='ALL'):
     x_vals, winrate, avg_floor = [], [], []
     for n in range(run_qty-1, len(runs)):
         last_qty = runs[n-run_qty+1:n+1]
-        x_vals.append(n)
-        floors = [1 if r['victory'] else 0 for r in last_qty]
+        x_vals.append(n + 1)
+        floors = [100 if r['victory'] else 0 for r in last_qty]
         winrate.append(statistics.mean(floors))
-        floors = [r['floor_reached'] / 57 for r in last_qty]
+        floors = [r['floor_reached'] for r in last_qty]
         avg_floor.append(statistics.mean(floors))
     return [{
                 'run': x_vals[n],

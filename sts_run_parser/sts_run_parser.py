@@ -9,44 +9,45 @@ from .parser import average_floor_data, runs, run_filter
 class State(rx.State):
     """The app state."""
     character: str = 'ALL'
-    lookback: int = 100
+    lookback: list[int | float] = [100]
+    live_lookback: list[int | float] = [100]
 
     @rx.var
     def data(self) -> list[dict[str, Any]]:
         def sort_key(run):
             return run['local_time']
         rundata = sorted(list(filter(run_filter, runs())), key=sort_key)
-        return average_floor_data(rundata, self.lookback, self.character)
-
-    @rx.event
-    def change_character(self, value: str):
-        self.character = value
-
-    @rx.event
-    def change_lookback(self, value: list[int | float]):
-        self.lookback = value[0]
+        return average_floor_data(rundata, self.lookback[0], self.character)
 
 
 def index() -> rx.Component:
     # Welcome Page (Index)
     return rx.container(
-        rx.color_mode.button(position="top-right"),
+        rx.color_mode.button(position="bottom-right"),
         rx.vstack(
+            rx.heading('Average height reached and winrate over the last'
+                       f" {State.data[-1]['run']} runs, with a lookback period"
+                       f" of {State.lookback[0]} runs.",
+                       align='center'),
             rx.recharts.line_chart(
                 rx.recharts.line(
                     data_key='winrate',
                     stroke='#82ca9d',
                     dot=False,
                     type_='monotone',
-                    stroke_width=2),
+                    stroke_width=2,
+                    y_axis_id='left'),
                 rx.recharts.line(
                     data_key='avg_floor',
                     stroke='#8884d8',
                     dot=False,
                     type_='monotone',
-                    stroke_width=2),
+                    stroke_width=2,
+                    y_axis_id='right'),
                 rx.recharts.x_axis(data_key='run'),
-                rx.recharts.y_axis(),
+                rx.recharts.y_axis(data_key='winrate', y_axis_id='left'),
+                rx.recharts.y_axis(data_key='avg_floor', y_axis_id='right',
+                                   orientation='right'),
                 rx.recharts.graphing_tooltip(),
                 rx.recharts.legend(),
                 data=State.data,
@@ -57,21 +58,21 @@ def index() -> rx.Component:
                 rx.select(
                     ['ALL', 'IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER'],
                     value=State.character,
-                    on_change=State.change_character
+                    on_change=State.set_character
                 ),
-                rx.vstack(
-                    rx.heading(State.lookback),
-                    rx.slider(
-                        on_value_commit=State.change_lookback,
-                        min_=1,
-                        max=500
-                    ),
-                    width='100%'
+                rx.slider(
+                    on_value_commit=State.set_lookback,
+                    on_change=State.set_live_lookback.throttle(100),
+                    min=10,
+                    max=500,
+                    step=10,
+                    width='200px'
                 ),
-                width='100%'
-            )
-        ),
-        rx.logo(),
+                rx.text(State.live_lookback[0]),
+                align='center'
+            ),
+            align='center'
+        )
     )
 
 
