@@ -14,10 +14,6 @@ class State(rx.State):
     def data(self) -> list[dict[str, Any]]:
         return average_floor_data(self.lookback[0], self.character)
 
-    @rx.var
-    def data_exists(self) -> bool:
-        return bool(self.data)
-
 
 def index() -> rx.Component:
     return rx.container(
