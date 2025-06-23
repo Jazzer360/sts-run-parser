@@ -1,4 +1,3 @@
-"""Welcome to Reflex! This file outlines the steps to create a basic app."""
 from typing import Any
 
 import reflex as rx
@@ -7,7 +6,6 @@ from .parser import average_floor_data, runs, run_filter
 
 
 class State(rx.State):
-    """The app state."""
     character: str = 'ALL'
     lookback: list[int | float] = [100]
     live_lookback: list[int | float] = [100]
@@ -19,16 +17,23 @@ class State(rx.State):
         rundata = sorted(list(filter(run_filter, runs())), key=sort_key)
         return average_floor_data(rundata, self.lookback[0], self.character)
 
+    @rx.var
+    def data_exists(self) -> bool:
+        return bool(self.data)
+
 
 def index() -> rx.Component:
-    # Welcome Page (Index)
     return rx.container(
         rx.color_mode.button(position="bottom-right"),
         rx.vstack(
-            rx.heading('Average height reached and winrate over the last'
-                       f" {State.data[-1]['run']} runs, with a lookback period"
-                       f" of {State.lookback[0]} runs.",
-                       align='center'),
+            rx.cond(
+                State.data_exists,
+                rx.heading(
+                    'Average floor reached and winrate over the last'
+                    f" {State.data[-1]['run']} runs, with a lookback period"
+                    f" of {State.lookback[0]} runs.",
+                    align='center'),
+                None),
             rx.recharts.line_chart(
                 rx.recharts.line(
                     data_key='winrate',
@@ -44,6 +49,16 @@ def index() -> rx.Component:
                     type_='monotone',
                     stroke_width=2,
                     y_axis_id='right'),
+                rx.recharts.reference_line(
+                    y=17,
+                    y_axis_id='right',
+                    stroke='#8884d8',
+                    label='Act 1'),
+                rx.recharts.reference_line(
+                    y=34,
+                    y_axis_id='right',
+                    stroke='#8884d8',
+                    label='Act 2'),
                 rx.recharts.x_axis(data_key='run'),
                 rx.recharts.y_axis(data_key='winrate', y_axis_id='left'),
                 rx.recharts.y_axis(data_key='avg_floor', y_axis_id='right',
