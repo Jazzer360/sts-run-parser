@@ -33,11 +33,8 @@ def cache_on_directory_change(directory):
             current_hash = get_directory_hash(directory)
 
             if current_hash != last_hash:
-                print("Change detected in the directory. Re-loading data...")
                 cached_data = list(generator_func(*args, **kwargs))
                 last_hash = current_hash
-            else:
-                print("Directory unchanged. Returning cached data.")
 
             return cached_data
         return wrapper
@@ -69,17 +66,21 @@ def runs():
                     print(f'Error occured while processing {file_path}: {e}')
 
 
-def run_filter(run):
-    if run.get('ascension_level') != 20:
-        return False
-    char = run.get('character_chosen')
-    if char not in ['IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER']:
-        return False
-    if run.get('floor_reached') < 2:
-        return False
-    if run.get('is_daily'):
-        return False
-    return True
+def run_filter(char_filter):
+    def filter_func(run):
+        if run.get('ascension_level') != 20:
+            return False
+        char = run.get('character_chosen')
+        if char not in ['IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER']:
+            return False
+        if char_filter != 'ALL' and char != char_filter:
+            return False
+        if run.get('floor_reached') < 2:
+            return False
+        if run.get('is_daily'):
+            return False
+        return True
+    return filter_func
 
 
 def duration_format(seconds):
@@ -89,20 +90,18 @@ def duration_format(seconds):
     return f'{hrs:02}:{mins:02}:{secs:02}'
 
 
-def average_floor_data(runs, run_qty, char='ALL'):
-    def char_filter(run):
-        if char == 'ALL' or run.get('character_chosen') == char:
-            return True
-        else:
-            return False
-    runs = list(filter(char_filter, runs))
+def average_floor_data(run_qty, char='ALL'):
+    def sort_key(run):
+        return run['local_time']
+
+    all_runs = sorted(list(filter(run_filter(char), runs())), key=sort_key)
     x_vals, winrate, avg_floor = [], [], []
-    for n in range(run_qty-1, len(runs)):
-        last_qty = runs[n-run_qty+1:n+1]
+    for n in range(run_qty-1, len(all_runs)):
+        run_set = all_runs[n-run_qty+1:n+1]
         x_vals.append(n + 1)
-        floors = [100 if r['victory'] else 0 for r in last_qty]
+        floors = [100 if r['victory'] else 0 for r in run_set]
         winrate.append(statistics.mean(floors))
-        floors = [r['floor_reached'] for r in last_qty]
+        floors = [r['floor_reached'] for r in run_set]
         avg_floor.append(statistics.mean(floors))
     return [{
                 'run': x_vals[n],

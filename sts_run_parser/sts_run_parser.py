@@ -2,7 +2,7 @@ from typing import Any
 
 import reflex as rx
 
-from .parser import average_floor_data, runs, run_filter
+from .parser import average_floor_data
 
 
 class State(rx.State):
@@ -12,10 +12,7 @@ class State(rx.State):
 
     @rx.var
     def data(self) -> list[dict[str, Any]]:
-        def sort_key(run):
-            return run['local_time']
-        rundata = sorted(list(filter(run_filter, runs())), key=sort_key)
-        return average_floor_data(rundata, self.lookback[0], self.character)
+        return average_floor_data(self.lookback[0], self.character)
 
     @rx.var
     def data_exists(self) -> bool:
@@ -27,13 +24,15 @@ def index() -> rx.Component:
         rx.color_mode.button(position="bottom-right"),
         rx.vstack(
             rx.cond(
-                State.data_exists,
+                State.data,
                 rx.heading(
                     'Average floor reached and winrate over the last'
                     f" {State.data[-1]['run']} runs, with a lookback period"
                     f" of {State.lookback[0]} runs.",
                     align='center'),
-                None),
+                rx.heading(
+                    'Not enough run data for the selected character and'
+                    ' lookback period.')),
             rx.recharts.line_chart(
                 rx.recharts.line(
                     data_key='winrate',
