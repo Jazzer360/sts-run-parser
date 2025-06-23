@@ -1,11 +1,50 @@
 import os
+import hashlib
 import json
 import statistics
 from datetime import datetime
+from functools import wraps
 
 runs_path = "C:/Program Files (x86)/Steam/steamapps/common/SlayTheSpire/runs"
 
 
+def get_directory_hash(directory):
+    hasher = hashlib.md5()
+    for root, _, files in os.walk(directory):
+        for name in sorted(files):
+            filepath = os.path.join(root, name)
+            try:
+                hasher.update(filepath.encode('utf-8'))
+                mtime = os.path.getmtime(filepath)
+                hasher.update(str(mtime).encode('utf-8'))
+            except OSError:
+                pass
+    return hasher.hexdigest()
+
+
+def cache_on_directory_change(directory):
+    def decorator(generator_func):
+        cached_data = []
+        last_hash = None
+
+        @wraps(generator_func)
+        def wrapper(*args, **kwargs):
+            nonlocal cached_data, last_hash
+            current_hash = get_directory_hash(directory)
+
+            if current_hash != last_hash:
+                print("Change detected in the directory. Re-loading data...")
+                cached_data = list(generator_func(*args, **kwargs))
+                last_hash = current_hash
+            else:
+                print("Directory unchanged. Returning cached data.")
+
+            return cached_data
+        return wrapper
+    return decorator
+
+
+@cache_on_directory_change(runs_path)
 def runs():
     for dirpath, dirnames, filenames in os.walk(runs_path):
         for filename in filenames:
